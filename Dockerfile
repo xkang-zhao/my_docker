@@ -12,6 +12,11 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# 新增：安装 gcc 和编译必需的 Linux 头文件
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc build-essential linux-libc-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 # 4. 安装 Miniconda (这是管理 Python 环境的最佳方式)
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     bash ~/miniconda.sh -b -p /opt/conda && \
@@ -40,4 +45,5 @@ RUN conda clean -a -y
 RUN conda --version && conda run -n lerobot python --version
 
 # 8. 默认命令
+
 CMD ["/bin/bash"]

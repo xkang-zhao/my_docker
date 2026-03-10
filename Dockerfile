@@ -1,5 +1,6 @@
-# 1. 使用 NVIDIA 官方的基础镜像
-FROM nvidia/cuda:12.8.1-base-ubuntu20.04
+# 1. 使用 NVIDIA 官方的 NGC 基础镜像（绕过 Docker Hub）
+# FROM nvidia/cuda:12.8.1-base-ubuntu20.04
+FROM nvcr.io/nvidia/cuda:12.8.1-base-ubuntu20.04
 
 # 2. 静默安装设置
 ENV DEBIAN_FRONTEND=noninteractive
@@ -9,13 +10,24 @@ RUN apt-get update && apt-get install -y \
     wget \
     git \
     vim \
+    cmake \
     ca-certificates \
     openssh-client \
     openssh-server \
     python3-pip \
-    gcc \
     python3-dev \
-    linux-libc-dev \
+    build-essential \
+    pkg-config \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libswresample-dev \
+    libavfilter-dev \
+    libopengl0 \
+    libegl1 \
+    libglx-mesa0 \
     && rm -rf /var/lib/apt/lists/*
 
 # 配置 SSH 密钥和登录权限
@@ -35,7 +47,10 @@ RUN pip3 install jupyterlab==3.2.5
 RUN mkdir -p /home/inspur/image_components/jupyter_configure /etc/jupyter && \
     wget -P /home/inspur/image_components/jupyter_configure https://raw.githubusercontent.com/Winowang/jupyter_gpu/master/jupyter_notebook_config.py && \
     wget -P /home/inspur/image_components/jupyter_configure https://raw.githubusercontent.com/Winowang/jupyter_gpu/master/custom.js && \
-    cp -rf /home/inspur/image_components/jupyter_configure/* /etc/jupyter
+    cp -rf /home/inspur/image_components/jupyter_configure/* /etc/jupyter 
+
+RUN echo "c.ServerApp.terminado_settings = {'shell_command': ['/bin/bash']}" >> /etc/jupyter/jupyter_notebook_config.py && \
+    echo "c.NotebookApp.terminado_settings = {'shell_command': ['/bin/bash']}" >> /etc/jupyter/jupyter_notebook_config.py
 
 
 # 4. 安装 Miniconda (这是管理 Python 环境的最佳方式)
@@ -45,6 +60,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 
 # 5. 配置 Conda 环境变量 (这一步非常重要)
 ENV PATH=/opt/conda/bin:$PATH
+ENV SHELL=/bin/bash
 
 # 初始化 bash (让 conda activate 命令可用)
 RUN conda init bash
@@ -58,14 +74,19 @@ RUN conda config --set always_yes yes && \
 WORKDIR /root
 
 # 7. 安装lerobot环境与Jupyter内核支持
-RUN conda create -y -n lerobot python=3.10 
+RUN git clone https://github.com/huggingface/lerobot.git /root/lerobot
+
+RUN conda create -y -n lerobot python=3.12
+
 RUN conda run -n lerobot conda install -y ffmpeg -c conda-forge
-RUN conda run -n lerobot pip install lerobot ipykernel --no-cache-dir
+RUN conda run -n lerobot pip install -e /root/lerobot --no-cache-dir
+RUN conda run -n lerobot pip install --no-cache-dir ipykernel && \
+    conda run -n lerobot python -m ipykernel install --name lerobot --display-name "Python (lerobot)"
 
 RUN conda clean -a -y
 
-# 8. 验证安装 (使用 conda run 验证环境中真实的 python 版本)
+# 9. 验证安装 (使用 conda run 验证环境中真实的 python 版本)
 RUN conda --version && conda run -n lerobot python --version
 
-# 8. 默认命令：后台启动 sshd 服务，并在前台运行 Jupyter Lab
+# 10. 默认命令：后台启动 sshd 服务，并在前台运行 Jupyter Lab
 CMD ["/bin/bash", "-c", "/usr/sbin/sshd && jupyter lab --ip=0.0.0.0 --no-browser --allow-root"]

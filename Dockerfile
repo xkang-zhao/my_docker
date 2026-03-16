@@ -39,10 +39,6 @@ RUN mkdir -p /var/run/sshd && \
 # 安装 jupyterlab
 RUN pip3 install jupyterlab==3.2.5
 
-# 注意：诸如 /usr/sbin/sshd 和 jupyter lab 等长期运行的命令不能直接写在 Dockerfile 的编译流程中，
-# 建议通过 CMD、ENTRYPOINT 或是进入运行后的容器内部手动执行。
-# CMD ["/bin/bash", "-c", "/usr/sbin/sshd && jupyter lab --ip=0.0.0.0 --no-browser --allow-root"]
-
 # 下载并配置 Jupyter
 RUN mkdir -p /home/inspur/image_components/jupyter_configure /etc/jupyter && \
     wget -P /home/inspur/image_components/jupyter_configure https://raw.githubusercontent.com/Winowang/jupyter_gpu/master/jupyter_notebook_config.py && \
@@ -73,20 +69,14 @@ RUN conda config --set always_yes yes && \
 # 6. 设置工作目录 (建议不要使用 /root，使用 /workspace 更标准)
 WORKDIR /root
 
-# 7. 安装lerobot环境与Jupyter内核支持
-RUN git clone https://github.com/huggingface/lerobot.git /root/lerobot
+RUN conda install -n base ipykernel 
 
-RUN conda create -y -n lerobot python=3.12
+# 7. git rlinf
+RUN git clone https://github.com/RLinf/RLinf.git
 
-RUN conda run -n lerobot conda install -y ffmpeg -c conda-forge
-RUN conda run -n lerobot pip install -e /root/lerobot --no-cache-dir
-RUN conda run -n lerobot pip install --no-cache-dir ipykernel && \
-    conda run -n lerobot python -m ipykernel install --name lerobot --display-name "Python (lerobot)"
-
-RUN conda clean -a -y
-
-# 9. 验证安装 (使用 conda run 验证环境中真实的 python 版本)
-RUN conda --version && conda run -n lerobot python --version
+# 8. 安装isaaclab的环境，本地安装
+RUN cd /root/RLinf && \
+    bash requirements/install.sh embodied --model gr00t --env isaaclab
 
 # 10. 默认命令：后台启动 sshd 服务，并在前台运行 Jupyter Lab
 CMD ["/bin/bash", "-c", "/usr/sbin/sshd && jupyter lab --ip=0.0.0.0 --no-browser --allow-root"]

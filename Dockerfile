@@ -1,6 +1,6 @@
 # 1. 使用 NVIDIA 官方的 NGC 基础镜像（绕过 Docker Hub）
-# FROM nvidia/cuda:12.8.1-base-ubuntu20.04
-FROM nvcr.io/nvidia/cuda:12.4.1-devel-ubuntu20.04
+# FROM nvidia/cuda:12.8.1-base-ubuntu22.04
+FROM nvcr.io/nvidia/cuda:12.4.1-devel-ubuntu22.04
 
 # 2. 静默安装设置
 ENV DEBIAN_FRONTEND=noninteractive

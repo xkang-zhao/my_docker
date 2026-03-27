@@ -77,10 +77,10 @@ RUN git clone https://github.com/huggingface/lerobot.git /root/lerobot
 
 RUN conda create -y -n lerobot python=3.12
 
-RUN conda run -n lerobot conda install -y ffmpeg -c conda-forge
-RUN conda run -n lerobot pip install -e /root/lerobot --no-cache-dir
-RUN conda run -n lerobot pip install --no-cache-dir ipykernel && \
-    conda run -n lerobot python -m ipykernel install --name lerobot --display-name "Python (lerobot)"
+RUN /opt/conda/bin/conda install -n lerobot -y ffmpeg -c conda-forge
+RUN /opt/conda/envs/lerobot/bin/pip install -e /root/lerobot --no-cache-dir
+RUN /opt/conda/envs/lerobot/bin/pip install --no-cache-dir ipykernel && \
+    /opt/conda/envs/lerobot/bin/python -m ipykernel install --name lerobot --display-name "Python (lerobot)"
 
 RUN conda clean -a -y
 

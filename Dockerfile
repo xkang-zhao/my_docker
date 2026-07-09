@@ -1,5 +1,5 @@
-FROM quay.io/ascend/vllm-ascend:v0.14.0rc1-a3
-
+# FROM quay.io/ascend/vllm-ascend:v0.14.0rc1-a3
+FROM --platform=linux/arm64 quay.io/ascend/vllm-ascend:v0.14.0rc1-a3
 # ============================================================
 # System dependencies (Claude Code requires procps for process management)
 # ============================================================

@@ -1,31 +1,28 @@
-ARG BASE_IMAGE=quay.io/ascend/vllm-ascend:v0.17.0rc1
-FROM ${BASE_IMAGE}
-ARG CLAUDE_CODE_VERSION=2.1.168
+FROM quay.io/ascend/vllm-ascend:v0.19.1rc1
 
-# Preserve the image's torch, transformers, torch-npu and vLLM dependency set.
-# The 7B checkpoint is supplied by a read-only host mount at runtime.
+ARG VLLM_BASE_SHA=2a69949bdadf0e8942b7a1619b229cb475beef20
+ARG ASCEND_BASE_SHA=da421afad7192dac64e39ae1d32305d57344f3cf
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl procps iproute2 \
-    && rm -rf /var/lib/apt/lists/*
+    git curl jq procps && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh \
-    | bash -s -- "${CLAUDE_CODE_VERSION}"
-ENV PATH="/root/.local/bin:${PATH}"
-RUN claude --version
+RUN git clone https://github.com/vllm-project/vllm.git /vllm-workspace/vllm && \
+    git -C /vllm-workspace/vllm checkout "${VLLM_BASE_SHA}" && \
+    git clone https://github.com/vllm-project/vllm-ascend.git \
+      /vllm-workspace/vllm-ascend && \
+    git -C /vllm-workspace/vllm-ascend checkout "${ASCEND_BASE_SHA}" && \
+    git -C /vllm-workspace/vllm config user.name "Harbor Agent" && \
+    git -C /vllm-workspace/vllm config user.email "harbor@example.com" && \
+    git -C /vllm-workspace/vllm-ascend config user.name "Harbor Agent" && \
+    git -C /vllm-workspace/vllm-ascend config user.email "harbor@example.com"
 
 # COPY skills/ /skills/
-RUN mkdir -p /workspace/deliverables /logs/agent && \
-    git config --global user.email "agent@harbor-eval.local" && \
-    git config --global user.name "Harbor Evaluation Agent"
-
 WORKDIR /workspace
-ENV MODEL_PATH=/models/Olmo-Hybrid-7B
-ENV SERVED_MODEL_NAME=olmo-hybrid-7b
-ENV VLLM_SRC=/vllm-workspace/vllm
-ENV VLLM_ASCEND_SRC=/vllm-workspace/vllm-ascend
-ENV WORK_DIR=/workspace
-ENV DELIVERABLES_DIR=/workspace/deliverables
-ENV ASCEND_VISIBLE_DEVICES=0
-ENV TOKENIZERS_PARALLELISM=false
-ENV IS_SANDBOX=1
-ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+ENV VLLM_SRC=/vllm-workspace/vllm \
+    VLLM_ASCEND_SRC=/vllm-workspace/vllm-ascend \
+    MODEL_PATH=/models/DeepSeek-V4-Flash-w8a8-mtp \
+    SERVED_MODEL_NAME=deepseek-v4-flash-w8a8-mtp \
+    PYTORCH_NPU_ALLOC_CONF=expandable_segments:True \
+    OMP_PROC_BIND=false \
+    OMP_NUM_THREADS=1

@@ -1,11 +1,11 @@
-ARG BASE_IMAGE=quay.io/ascend/vllm-ascend:v0.18.0
+ARG BASE_IMAGE=quay.io/ascend/vllm-ascend:v0.17.0rc1
 FROM ${BASE_IMAGE}
 ARG CLAUDE_CODE_VERSION=2.1.168
 
 # Preserve the image's torch, transformers, torch-npu and vLLM dependency set.
-# The checkpoint is supplied by a read-only host mount at runtime.
+# The 7B checkpoint is supplied by a read-only host mount at runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl procps iproute2 libsndfile1 \
+    ca-certificates curl procps iproute2 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh \
@@ -19,8 +19,8 @@ RUN mkdir -p /workspace/deliverables /logs/agent && \
     git config --global user.name "Harbor Evaluation Agent"
 
 WORKDIR /workspace
-ENV MODEL_PATH=/models/Qwen3-ForcedAligner-0.6B
-ENV SERVED_MODEL_NAME=qwen3-forced-aligner-0.6b
+ENV MODEL_PATH=/models/Olmo-Hybrid-7B
+ENV SERVED_MODEL_NAME=olmo-hybrid-7b
 ENV VLLM_SRC=/vllm-workspace/vllm
 ENV VLLM_ASCEND_SRC=/vllm-workspace/vllm-ascend
 ENV WORK_DIR=/workspace

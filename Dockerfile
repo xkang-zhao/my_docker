@@ -16,7 +16,7 @@ RUN curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh \
 ENV PATH="/root/.local/bin:${PATH}"
 RUN claude --version
 
-COPY skills/ /skills/
+# COPY skills/ /skills/
 
 RUN mkdir -p /workspace/deliverables /logs/agent && \
     git config --global user.email "agent@harbor-eval.local" && \

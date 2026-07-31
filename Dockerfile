@@ -1,6 +1,6 @@
 FROM quay.io/ascend/vllm-ascend:v0.19.1rc1
 
-ARG VLLM_BASE_SHA=2a69949bdadf0e8942b7a1619b229cb475beef20
+ARG VLLM_BASE_SHA=b1388b1fbf5aaef47937fabe98931211684666a6
 ARG ASCEND_BASE_SHA=da421afad7192dac64e39ae1d32305d57344f3cf
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
